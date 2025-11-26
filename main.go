@@ -11,7 +11,16 @@ func main() {
 	const filepathRoot = "."
 
 	mux := http.NewServeMux()
-	mux.Handle("/", http.FileServer(http.Dir(filepathRoot)))
+	mux.Handle("/app/", http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot))))
+	mux.HandleFunc("/healthz", func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Add("Content-Type", "text/plain; charset=utf-8")
+		w.WriteHeader(200)
+		_, err := w.Write([]byte(http.StatusText(http.StatusOK)))
+		if err != nil {
+			log.Fatal("Failed to write http body")
+		}
+
+	})
 
 	s := &http.Server{
 		Addr:           ":" + port,
