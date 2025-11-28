@@ -25,7 +25,7 @@ func main() {
 	mux.HandleFunc("/metrics", cfg.handlerMetrics)
 	mux.HandleFunc("/reset", cfg.handlerReset)
 
-	s := &http.Server{
+	srv := &http.Server{
 		Addr:           ":" + port,
 		Handler:        mux,
 		ReadTimeout:    10 * time.Second,
@@ -34,8 +34,9 @@ func main() {
 	}
 
 	log.Printf("Serving files from %s on port: %s\n", filepathRoot, port)
-	log.Fatal(s.ListenAndServe())
+	log.Fatal(srv.ListenAndServe())
 }
+
 func (cfg *apiConfig) handlerMetrics(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
