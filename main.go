@@ -20,19 +20,10 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/healthz", func(w http.ResponseWriter, req *http.Request) {
-		w.Header().Add("Content-Type", "text/plain; charset=utf-8")
-		w.WriteHeader(200)
-		_, err := w.Write([]byte(http.StatusText(http.StatusOK)))
-		if err != nil {
-			log.Fatal("Failed to write http body")
-		}
-	}
 	mux.Handle("/app/", cfg.metricsMiddleware(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot)))))
 	mux.HandleFunc("/healthz", handlerReadiness)
 	mux.HandleFunc("/metrics", cfg.handlerMetrics)
 	mux.HandleFunc("/reset", cfg.handlerReset)
-
 
 	s := &http.Server{
 		Addr:           ":" + port,
@@ -44,6 +35,7 @@ func main() {
 
 	log.Printf("Serving files from %s on port: %s\n", filepathRoot, port)
 	log.Fatal(s.ListenAndServe())
+}
 func (cfg *apiConfig) handlerMetrics(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
