@@ -33,12 +33,7 @@ func main() {
 	dbQueries := database.New(db)
 	api := handlers.New(dbQueries)
 
-	mux := http.NewServeMux()
-	mux.Handle("/app/", cfg.metricsMiddleware(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot)))))
-	mux.HandleFunc("GET /api/healthz", handlerReadiness)
-	mux.HandleFunc("POST /api/validate_chirp", handlerValidateChirp)
-	mux.HandleFunc("GET /admin/metrics", cfg.handlerMetrics)
-	mux.HandleFunc("POST /admin/reset", cfg.handlerReset)
+	mux := server.NewMux(api)
 
 	srv := &http.Server{
 		Addr:           ":" + port,
