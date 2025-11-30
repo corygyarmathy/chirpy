@@ -78,8 +78,18 @@
 
             # Database
             postgresql
-            goose
-            sqlc
+            goose # Go database migration tool
+            sqlc # SQL -> Go code generation tool
+
+            # Development tools
+            air # Live reload for Go
+            jq # JSON processing for API testing
+
+            # HTTP testing
+            httpie # Perform HTTP requests in the CLI
+
+            # Security
+            govulncheck # Vulnerability scanner for Go dependencies
 
             # PostgreSQL helpers
             pgstart
