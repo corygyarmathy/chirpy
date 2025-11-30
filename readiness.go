@@ -1,9 +1,16 @@
 package main
 
-import "net/http"
+import (
+	"log"
+	"net/http"
+)
 
 func handlerReadiness(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(http.StatusText(http.StatusOK)))
+	if _, err := w.Write([]byte(http.StatusText(http.StatusOK))); err != nil {
+		log.Printf("Error writing data: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }
