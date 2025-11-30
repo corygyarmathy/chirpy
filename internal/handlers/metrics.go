@@ -6,10 +6,10 @@ import (
 	"net/http"
 )
 
-func (cfg *API) Metrics(w http.ResponseWriter, r *http.Request) {
+func (api *API) Metrics(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	hits := cfg.FileserverHits.Load()
+	hits := api.FileserverHits.Load()
 	body := fmt.Sprintf(`
 <html>
     <body>
@@ -24,9 +24,9 @@ func (cfg *API) Metrics(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (cfg *API) MetricsMiddleware(next http.Handler) http.Handler {
+func (api *API) MetricsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cfg.FileserverHits.Add(1)
+		api.FileserverHits.Add(1)
 
 		next.ServeHTTP(w, r)
 	})
