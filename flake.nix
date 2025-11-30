@@ -17,8 +17,8 @@
         projectName = "chirpy";
         dbName = projectName;
         pgDataDir = ".postgres";
-        migrationsDir = "./sql/schema";
-        queriesDir = "./sql/queries";
+        migrationsDir = "./db/migrations";
+        queriesDir = "./db/queries";
 
         # PostgreSQL helper scripts
         dbstart = pkgs.writeShellScriptBin "dbstart" ''
