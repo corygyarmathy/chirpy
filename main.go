@@ -5,17 +5,13 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"sync/atomic"
 	"time"
 
 	"github.com/corygyarmathy/chirpy/internal/database"
+	"github.com/corygyarmathy/chirpy/internal/handlers"
+	"github.com/corygyarmathy/chirpy/internal/server"
 	_ "github.com/lib/pq"
 )
-
-type apiConfig struct {
-	fileserverHits atomic.Int32
-	db             *database.Queries
-}
 
 func main() {
 	const port = "8080"
@@ -35,10 +31,7 @@ func main() {
 	}()
 
 	dbQueries := database.New(db)
-	cfg := apiConfig{
-		fileserverHits: atomic.Int32{},
-		db:             dbQueries,
-	}
+	api := handlers.New(dbQueries)
 
 	mux := http.NewServeMux()
 	mux.Handle("/app/", cfg.metricsMiddleware(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot)))))
