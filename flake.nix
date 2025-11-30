@@ -166,6 +166,7 @@
             postgresql
             goose # Go database migration tool
             sqlc # SQL -> Go code generation tool
+            pgcli
 
             # Development tools
             air # Live reload for Go
