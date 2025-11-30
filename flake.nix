@@ -18,9 +18,10 @@
         dbName = projectName;
         pgDataDir = ".postgres";
         migrationsDir = "./sql/schema";
+        queriesDir = "./sql/queries";
 
         # PostgreSQL helper scripts
-        pgstart = pkgs.writeShellScriptBin "pgstart" ''
+        dbstart = pkgs.writeShellScriptBin "dbstart" ''
           # Initialise PostgreSQL if needed
           if [ ! -d "$PGDATA" ]; then
             echo "Initialising PostgreSQL..."
@@ -49,7 +50,7 @@
           fi
         '';
 
-        pgstop = pkgs.writeShellScriptBin "pgstop" ''
+        dbstop = pkgs.writeShellScriptBin "dbstop" ''
           if pg_ctl status >/dev/null 2>&1; then
             pg_ctl stop -m fast
             echo "PostgreSQL stopped"
@@ -58,12 +59,97 @@
           fi
         '';
 
-        pgstatus = pkgs.writeShellScriptBin "pgstatus" ''
+        dbstatus = pkgs.writeShellScriptBin "dbstatus" ''
           pg_ctl status
         '';
 
-        pglogs = pkgs.writeShellScriptBin "pglogs" ''
+        dblogs = pkgs.writeShellScriptBin "dblogs" ''
           tail -f "$PGDATA/logfile"
+        '';
+
+        # Setup script to create project structure and config files
+        setup-project = pkgs.writeShellScriptBin "setup-project" ''
+          echo "Setting up project structure..."
+
+          # Create directories
+          mkdir -p ${migrationsDir}
+          mkdir -p ${queriesDir}
+
+          # Create .air.toml if it doesn't exist
+          if [ ! -f .air.toml ]; then
+            cat > .air.toml << 'EOF'
+          root = "."
+          testdata_dir = "testdata"
+          tmp_dir = "tmp"
+
+          [build]
+            args_bin = []
+            bin = "./tmp/main"
+            cmd = "go build -o ./tmp/main ."
+            delay = 1000
+            exclude_dir = ["assets", "tmp", "vendor", "testdata", ".postgres"]
+            exclude_file = []
+            exclude_regex = ["_test.go"]
+            exclude_unchanged = false
+            follow_symlink = false
+            full_bin = ""
+            include_dir = []
+            include_ext = ["go", "tpl", "tmpl", "html"]
+            include_file = []
+            kill_delay = "0s"
+            log = "build-errors.log"
+            poll = false
+            poll_interval = 0
+            post_cmd = []
+            pre_cmd = []
+            rerun = false
+            rerun_delay = 500
+            send_interrupt = false
+            stop_on_error = false
+
+          [color]
+            app = ""
+            build = "yellow"
+            main = "magenta"
+            runner = "green"
+            watcher = "cyan"
+
+          [log]
+            main_only = false
+            time = false
+
+          [misc]
+            clean_on_exit = false
+
+          [screen]
+            clear_on_rebuild = false
+            keep_scroll = true
+          EOF
+            echo "✓ Created .air.toml"
+          fi
+
+          # Create sqlc.yaml if it doesn't exist
+          if [ ! -f sqlc.yaml ]; then
+            cat > sqlc.yaml << 'EOF'
+          version: "2"
+          sql:
+            - schema: "${migrationsDir}"
+              queries: "${queriesDir}"
+              engine: "postgresql"
+              gen:
+                go:
+                  package: "database"
+                  out: "internal/database"
+                  emit_json_tags: true
+                  emit_interface: false
+                  emit_exact_table_names: false
+          EOF
+            echo "✓ Created sqlc.yaml"
+          fi
+
+          echo "✓ Project structure ready"
+          echo "  Migrations: ${migrationsDir}"
+          echo "  Queries: ${queriesDir}"
         '';
 
       in
@@ -90,34 +176,43 @@
 
             # Security
             govulncheck # Vulnerability scanner for Go dependencies
-
-            # PostgreSQL helpers
-            pgstart
-            pgstop
-            pgstatus
-            pglogs
+            # Helper scripts
+            dbstart
+            dbstop
+            dbstatus
+            dblogs
+            setup-project
           ];
 
           shellHook = ''
+            # PostgreSQL configuration (PG* vars required by PostgreSQL tools)
             export PGDATA="$PWD/${pgDataDir}"
             export PGHOST="$PGDATA"
             export PGDATABASE="${dbName}"
-            export DATABASE_URL="postgres:///$PGDATABASE?host=$PGHOST"
+
+            # Generic database configuration (for your application)
+            export DB_URL="postgres:///$PGDATABASE?host=$PGHOST"
+            export DATABASE_URL="$DB_URL"  # Alias for compatibility
 
             # Goose environment variables
             export GOOSE_DRIVER="postgres"
-            export GOOSE_DBSTRING="$DATABASE_URL"
+            export GOOSE_DBSTRING="$DB_URL"
             export GOOSE_MIGRATION_DIR="${migrationsDir}"
+
+            # Auto-setup project structure on first run
+            if [ ! -d "${migrationsDir}" ] || [ ! -f "sqlc.yaml" ] || [ ! -f ".air.toml" ]; then
+              setup-project
+            fi
 
             # Check if PostgreSQL is running
             if pg_ctl status >/dev/null 2>&1; then
               echo "✓ ${projectName} dev environment ready (PostgreSQL running)"
             else
               echo "✓ ${projectName} dev environment ready"
-              echo "  Run 'pgstart' to start PostgreSQL"
+              echo "  Run 'dbstart' to start PostgreSQL"
             fi
 
-            echo "  Commands: pgstart, pgstop, pgstatus, pglogs"
+            echo "  Commands: dbstart, dbstop, dbstatus, dblogs"
           '';
         };
       }
