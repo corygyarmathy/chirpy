@@ -200,6 +200,9 @@
             export GOOSE_DBSTRING="$DB_URL"
             export GOOSE_MIGRATION_DIR="${migrationsDir}"
 
+            # Development environment variables
+            export PLATFORM="dev" # dev | prod | test
+
             # Auto-setup project structure on first run
             if [ ! -d "${migrationsDir}" ] || [ ! -f "sqlc.yaml" ] || [ ! -f ".air.toml" ]; then
               setup-project

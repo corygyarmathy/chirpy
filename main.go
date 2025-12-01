@@ -20,6 +20,11 @@ func main() {
 	if dbURL == "" {
 		log.Fatal("DATABASE_URL environment variable must be set")
 	}
+	platform := os.Getenv("PLATFORM")
+	if platform == "" {
+		log.Fatal("PLATFORM environment variable must be set")
+	}
+
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Fatalf("DB SQL open error: %v\n", err)

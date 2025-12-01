@@ -6,11 +6,30 @@ import (
 )
 
 func (api *API) Reset(w http.ResponseWriter, r *http.Request) {
-	api.FileserverHits.Store(0)
-	w.WriteHeader(http.StatusOK)
-	if _, err := w.Write([]byte("Hits reset to 0")); err != nil {
-		log.Printf("reset: error writing response: %v", err)
+	statusCode := http.StatusOK
+	response := []byte("Hits reset to 0")
+
+	if api.platform != "dev" {
+		statusCode = http.StatusForbidden
+		w.WriteHeader(statusCode)
+		response = []byte("Reset is only allowed in dev environment.")
+		if _, err := w.Write(response); err != nil {
+			log.Printf("reset: error writing response: %v", err)
+			return
+		}
 		return
 	}
 
+	api.FileserverHits.Store(0)
+	err := api.DB.ResetUsers(r.Context())
+	if err != nil {
+		statusCode = http.StatusInternalServerError
+		log.Printf("reset: error resetting users: %v", err)
+	}
+
+	w.WriteHeader(statusCode)
+	if _, err := w.Write(response); err != nil {
+		log.Printf("reset: error writing response: %v", err)
+		return
+	}
 }
