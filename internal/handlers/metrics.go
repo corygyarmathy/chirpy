@@ -20,7 +20,7 @@ func (api *API) Metrics(w http.ResponseWriter, r *http.Request) {
 		`, hits)
 	_, err := w.Write([]byte(body))
 	if err != nil {
-		log.Fatal("Failed to write http body")
+		log.Printf("metrics: failed to write response: %v", err)
 	}
 }
 
