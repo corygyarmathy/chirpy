@@ -7,18 +7,17 @@ import (
 	"strings"
 )
 
-func ValidateChirp(w http.ResponseWriter, r *http.Request) {
+func (api *API) ValidateChirp(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Body string `json:"body"`
 	}
 
-	type returnVals struct {
+	type response struct {
 		CleanedBody string `json:"cleaned_body"`
 	}
 
-	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
-	if err := decoder.Decode(&params); err != nil {
+	var params parameters
+	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters", err)
 		return
 	}
@@ -29,10 +28,10 @@ func ValidateChirp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cBody := profanityCensor(params.Body)
+	cleaned := profanityCensor(params.Body)
 
-	respondWithJSON(w, http.StatusOK, returnVals{
-		CleanedBody: cBody,
+	respondWithJSON(w, http.StatusOK, response{
+		CleanedBody: cleaned,
 	})
 }
 
