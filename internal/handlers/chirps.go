@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -10,6 +11,30 @@ import (
 	"github.com/corygyarmathy/chirpy/internal/database"
 	"github.com/google/uuid"
 )
+
+func (api *API) GetChirps(w http.ResponseWriter, r *http.Request) {
+	chirps, err := api.DB.GetChirps(r.Context())
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "GetChirps: couldn't get chirps from DB", err)
+	}
+	respondWithJSON(w, http.StatusOK, chirps)
+}
+
+func (api *API) GetChirpByID(w http.ResponseWriter, r *http.Request) {
+	chirpID := r.PathValue("chirpID")
+	id, err := uuid.Parse(chirpID)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "GetChirps: couldn't parse path value 'chirpID' to UUID", err)
+	}
+	chirp, err := api.DB.GetChirpByID(r.Context(), id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			respondWithError(w, http.StatusNotFound, "GetChirps: no chirps found for the given ID", err)
+		}
+		respondWithError(w, http.StatusInternalServerError, "GetChirps: couldn't get chirps from DB", err)
+	}
+	respondWithJSON(w, http.StatusOK, chirp)
+}
 
 func (api *API) CreateChirp(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
