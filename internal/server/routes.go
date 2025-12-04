@@ -23,6 +23,7 @@ func NewMux(api *handlers.API) *http.ServeMux {
 	mux.HandleFunc("GET /api/chirps/{chirpID}", api.GetChirpByID)
 	mux.HandleFunc("POST /api/chirps", api.CreateChirp)
 	mux.HandleFunc("POST /api/users", api.CreateUser)
+	mux.HandleFunc("POST /api/login", api.LoginUser)
 	mux.HandleFunc("GET /admin/metrics", api.Metrics)
 	mux.HandleFunc("POST /admin/reset", api.Reset)
 
