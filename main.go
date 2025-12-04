@@ -24,6 +24,10 @@ func main() {
 	if platform == "" {
 		log.Fatal("PLATFORM environment variable must be set")
 	}
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		log.Fatal("JWT_SECRET environment variable must be set")
+	}
 
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
@@ -36,7 +40,7 @@ func main() {
 	}()
 
 	dbQueries := database.New(db)
-	api := handlers.New(dbQueries)
+	api := handlers.New(dbQueries, platform, jwtSecret)
 
 	mux := server.NewMux(api)
 
