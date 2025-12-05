@@ -37,3 +37,46 @@ func (api *API) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	respondWithJSON(w, http.StatusCreated, user)
 }
+
+func (api *API) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	type parameters struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	var params parameters
+	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "UpdateUser: couldn't decode parameters", err)
+		return
+	}
+
+	accessTokenString, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "UpdateUser: failed to get access token from request header", err)
+		return
+	}
+
+	userID, err := auth.ValidateJWT(accessTokenString, api.jwtSecret)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "UpdateUser: user JWT not authorised", err)
+		return
+	}
+
+	hashedPassword, err := auth.HashPassword(params.Password)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "UpdateUser: couldn't hash password", err)
+		return
+	}
+
+	user, err := api.DB.UpdateUser(r.Context(), database.UpdateUserParams{
+		ID:             userID,
+		Email:          params.Email,
+		HashedPassword: hashedPassword,
+	})
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "UpdateUser: couldn't update user in DB", err)
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, user)
+}
