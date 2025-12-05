@@ -102,3 +102,41 @@ func profanityCensor(s string) string {
 
 	return strings.Join(words, " ")
 }
+
+func (api *API) DeleteChirp(w http.ResponseWriter, r *http.Request) {
+	chirpID := r.PathValue("chirpID")
+	chirpUUID, err := uuid.Parse(chirpID)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "DeleteChirp: couldn't parse path value 'chirpID' to UUID", err)
+	}
+	chirp, err := api.DB.GetChirpByID(r.Context(), chirpUUID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			respondWithError(w, http.StatusNotFound, "DeleteChirp: no chirps found for the given ID", err)
+		}
+		respondWithError(w, http.StatusInternalServerError, "DeleteChirp: couldn't get chirps from DB", err)
+	}
+
+	accessToken, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "DeleteChirp: failed to get access token from request header", err)
+		return
+	}
+
+	userID, err := auth.ValidateJWT(accessToken, api.jwtSecret)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "DeleteChirp: user JWT not authorised", err)
+		return
+	}
+
+	if chirp.UserID != userID {
+		respondWithError(w, http.StatusForbidden, "DeleteChirp: user ID does not match chirp user ID", err)
+		return
+	}
+
+	if err = api.DB.DeleteChirp(r.Context(), chirp.ID); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "DeleteChirp: failed to delete chirp", err)
+		return
+	}
+	respondWithJSON(w, http.StatusNoContent, nil)
+}
