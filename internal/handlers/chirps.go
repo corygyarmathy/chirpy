@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"slices"
+	"sort"
 	"strings"
 
 	"github.com/corygyarmathy/chirpy/internal/auth"
@@ -17,10 +18,12 @@ func (api *API) GetChirps(w http.ResponseWriter, r *http.Request) {
 	var chirps []database.Chirp
 	var err error
 
-	s := r.URL.Query().Get("author_id")
+	authorID := r.URL.Query().Get("author_id")
+	sortOrder := r.URL.Query().Get("sort")
 
-	if s != "" {
-		authorUUID, err := uuid.Parse(s)
+	if authorID != "" {
+		var authorUUID uuid.UUID
+		authorUUID, err = uuid.Parse(authorID)
 		if err != nil {
 			respondWithError(w, http.StatusInternalServerError, "GetChirps: couldn't parse path value 'author_id' to UUID", err)
 		}
@@ -34,6 +37,13 @@ func (api *API) GetChirps(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			respondWithError(w, http.StatusInternalServerError, "GetChirps: couldn't get chirps from DB", err)
 		}
+	}
+
+	if sortOrder == "desc" {
+		sort.Slice(chirps, func(i, j int) bool { return chirps[i].CreatedAt.After(chirps[j].CreatedAt) })
+	} else {
+		// "asc" or empty or anything else
+		sort.Slice(chirps, func(i, j int) bool { return chirps[i].CreatedAt.Before(chirps[j].CreatedAt) })
 	}
 
 	respondWithJSON(w, http.StatusOK, chirps)
