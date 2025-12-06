@@ -12,13 +12,15 @@ type API struct {
 	DB             *database.Queries
 	platform       string
 	jwtSecret      string
+	polkaKey       string
 }
 
-func New(db *database.Queries, platform string, jwtSecret string) *API {
+func New(db *database.Queries, platform string, jwtSecret string, polkaKey string) *API {
 	return &API{
 		FileserverHits: atomic.Int32{},
 		DB:             db,
 		platform:       platform,
 		jwtSecret:      jwtSecret,
+		polkaKey:       polkaKey,
 	}
 }

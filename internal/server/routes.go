@@ -28,8 +28,11 @@ func NewMux(api *handlers.API) *http.ServeMux {
 	mux.HandleFunc("POST /api/login", api.LoginUser)
 	mux.HandleFunc("POST /api/refresh", api.RefreshLogin)
 	mux.HandleFunc("POST /api/revoke", api.RevokeLogin)
+
 	mux.HandleFunc("GET /admin/metrics", api.Metrics)
 	mux.HandleFunc("POST /admin/reset", api.Reset)
+
+	mux.HandleFunc("POST /api/polka/webhooks", api.Webhooks)
 
 	return mux
 }
