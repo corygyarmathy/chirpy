@@ -14,10 +14,28 @@ import (
 )
 
 func (api *API) GetChirps(w http.ResponseWriter, r *http.Request) {
-	chirps, err := api.DB.GetChirps(r.Context())
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "GetChirps: couldn't get chirps from DB", err)
+	var chirps []database.Chirp
+	var err error
+
+	s := r.URL.Query().Get("author_id")
+
+	if s != "" {
+		authorUUID, err := uuid.Parse(s)
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "GetChirps: couldn't parse path value 'author_id' to UUID", err)
+		}
+
+		chirps, err = api.DB.GetChirpsByUserID(r.Context(), authorUUID)
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "GetChirps: couldn't get chirps from DB", err)
+		}
+	} else {
+		chirps, err = api.DB.GetChirps(r.Context())
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "GetChirps: couldn't get chirps from DB", err)
+		}
 	}
+
 	respondWithJSON(w, http.StatusOK, chirps)
 }
 
