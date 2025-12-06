@@ -129,8 +129,10 @@ func (api *API) RevokeLogin(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			respondWithError(w, http.StatusNotFound, "RevokeLogin: no refresh token found for the given token string", err)
+			return
 		}
 		respondWithError(w, http.StatusInternalServerError, "RevokeLogin: couldn't get refreshToken from DB", err)
+		return
 	}
 
 	err = api.DB.RevokeRefreshToken(r.Context(), refreshToken.UserID)

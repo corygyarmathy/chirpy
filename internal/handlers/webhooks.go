@@ -45,6 +45,7 @@ func (api *API) Webhooks(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		respondWithError(w, http.StatusInternalServerError, "Webhooks: failed to set chirpy red to active in DB", err)
+		return
 	}
 
 	respondWithJSON(w, http.StatusNoContent, nil)

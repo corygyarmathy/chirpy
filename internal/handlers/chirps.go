@@ -26,16 +26,19 @@ func (api *API) GetChirps(w http.ResponseWriter, r *http.Request) {
 		authorUUID, err = uuid.Parse(authorID)
 		if err != nil {
 			respondWithError(w, http.StatusInternalServerError, "GetChirps: couldn't parse path value 'author_id' to UUID", err)
+			return
 		}
 
 		chirps, err = api.DB.GetChirpsByUserID(r.Context(), authorUUID)
 		if err != nil {
 			respondWithError(w, http.StatusInternalServerError, "GetChirps: couldn't get chirps from DB", err)
+			return
 		}
 	} else {
 		chirps, err = api.DB.GetChirps(r.Context())
 		if err != nil {
 			respondWithError(w, http.StatusInternalServerError, "GetChirps: couldn't get chirps from DB", err)
+			return
 		}
 	}
 
@@ -54,13 +57,16 @@ func (api *API) GetChirpByID(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chirpID)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "GetChirps: couldn't parse path value 'chirpID' to UUID", err)
+		return
 	}
 	chirp, err := api.DB.GetChirpByID(r.Context(), id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			respondWithError(w, http.StatusNotFound, "GetChirps: no chirps found for the given ID", err)
+			return
 		}
 		respondWithError(w, http.StatusInternalServerError, "GetChirps: couldn't get chirps from DB", err)
+		return
 	}
 	respondWithJSON(w, http.StatusOK, chirp)
 }
@@ -136,13 +142,16 @@ func (api *API) DeleteChirp(w http.ResponseWriter, r *http.Request) {
 	chirpUUID, err := uuid.Parse(chirpID)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "DeleteChirp: couldn't parse path value 'chirpID' to UUID", err)
+		return
 	}
 	chirp, err := api.DB.GetChirpByID(r.Context(), chirpUUID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			respondWithError(w, http.StatusNotFound, "DeleteChirp: no chirps found for the given ID", err)
+			return
 		}
 		respondWithError(w, http.StatusInternalServerError, "DeleteChirp: couldn't get chirps from DB", err)
+		return
 	}
 
 	accessToken, err := auth.GetBearerToken(r.Header)
